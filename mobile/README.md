@@ -1,17 +1,14 @@
-# Application mobile Flutter
+# SafeHer mobile
 
-Le projet Flutter sera initialisé dans cette répertoire lors de la prochaine étape avec :
-
-- authentification ;
-- écran d'accueil ;
-- accès au coffre-fort ;
-- bouton SOS ;
-- annuaire de ressources.
-
-Pour l'initialiser localement :
+## Lancer l'application
 
 ```bash
-flutter create .
+flutter pub get
+flutter run --dart-define=SAFEHER_API_URL=http://10.0.2.2:3000
 ```
 
-Ne pas utiliser ce dossier pour stocker des données sensibles en clair.
+- Android Emulator : `http://10.0.2.2:3000`
+- iOS Simulator : `http://127.0.0.1:3000`
+- Téléphone physique : remplacer l'URL par l'adresse IP locale de l'ordinateur.
+
+Les tokens sont conservés dans `flutter_secure_storage`. Le coffre-fort, le SOS et l'annuaire seront branchés dans les prochaines étapes.

@@ -1,0 +1,31 @@
+import { Controller, Delete, Get, Param, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { EvidenceService } from './evidence.service';
+
+@ApiTags('evidence')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('evidence')
+export class EvidenceController {
+  constructor(private readonly service: EvidenceService) {}
+
+  @Get()
+  list(@Req() request: Request & { user: { sub: string } }) {
+    return this.service.list(request.user.sub);
+  }
+
+  @Post('upload')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  upload(@Req() request: Request & { user: { sub: string } }, @UploadedFile() file?: { originalname: string; mimetype: string; size: number; buffer: Buffer }) {
+    return this.service.upload(request.user.sub, file);
+  }
+
+  @Delete(':id')
+  remove(@Req() request: Request & { user: { sub: string } }, @Param('id') id: string) {
+    return this.service.remove(request.user.sub, id);
+  }
+}

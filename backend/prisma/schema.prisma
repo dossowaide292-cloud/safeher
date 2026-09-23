@@ -18,6 +18,19 @@ model User {
   trustedContacts TrustedContact[]
   sosAlerts       SosAlert[]
   auditLogs       AuditLog[]
+  refreshTokens   RefreshToken[]
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model Evidence {
@@ -32,46 +45,42 @@ model Evidence {
   uploadedAt   DateTime @default(now())
   encrypted    Boolean  @default(false)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId, uploadedAt])
 }
 
 model TrustedContact {
-  id           String   @id @default(uuid())
-  userId       String
-  name         String
-  phone        String
+  id String @id @default(uuid())
+  userId String
+  name String
+  phone String
   relationship String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])
 }
 
 model SosAlert {
-  id         String    @id @default(uuid())
-  userId     String
-  latitude   Decimal?
-  longitude  Decimal?
-  message    String?
-  status     String    @default("TRIGGERED")
+  id String @id @default(uuid())
+  userId String
+  latitude Decimal?
+  longitude Decimal?
+  message String?
+  status String @default("TRIGGERED")
   triggeredAt DateTime @default(now())
   resolvedAt DateTime?
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, triggeredAt])
 }
 
 model AuditLog {
-  id           String   @id @default(uuid())
-  userId       String
-  action       String
+  id String @id @default(uuid())
+  userId String
+  action String
   resourceType String?
-  resourceId   String?
-  ipAddress    String?
-  createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  resourceId String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, createdAt])
 }

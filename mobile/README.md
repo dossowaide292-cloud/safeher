@@ -1,33 +1,26 @@
-# SafeHer mobile
+# Coffre-fort SafeHer
 
-## Installation
+Le coffre-fort propose maintenant un cycle complet :
+
+1. chiffrement AES-256-GCM sur le mobile ;
+2. upload du payload chiffré ;
+3. téléchargement authentifié ;
+4. déchiffrement local ;
+5. sauvegarde choisie par l’utilisatrice.
+
+La clé reste dans `flutter_secure_storage` et n’est jamais envoyée au serveur. Une nouvelle installation ne peut donc pas déchiffrer les anciennes preuves sans mécanisme de récupération de clé.
+
+## Validation
 
 ```bash
+cd backend
+npm run build
+```
+
+```bash
+cd mobile
 flutter pub get
 flutter analyze
 ```
 
-## Lancement
-
-Android Emulator :
-
-```bash
-flutter run --dart-define=SAFEHER_API_URL=http://10.0.2.2:3000
-```
-
-iOS Simulator :
-
-```bash
-flutter run --dart-define=SAFEHER_API_URL=http://127.0.0.1:3000
-```
-
-Téléphone physique : remplace l’URL par l’adresse IP locale de la machine qui exécute l’API.
-
-## Fonctionnalités branchées
-
-- Authentification : `/auth/register`, `/auth/login`, `/auth/logout`
-- Contacts : `/trusted-contacts`
-- SOS : `/sos`
-- Coffre-fort : `/evidence`, `/evidence/upload`
-
-Les tokens sont conservés avec `flutter_secure_storage`. Les fichiers sont chiffrés localement avec AES-256-GCM avant l’upload. Cette version ne permet pas encore la récupération/décryption des fichiers : ne l’utilisez pas avec des preuves réelles sans procédure de récupération de clé validée.
+Test fonctionnel : téléverser un fichier, le télécharger, puis vérifier que le fichier restauré est identique à l’original.

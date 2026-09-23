@@ -13,18 +13,8 @@ class EvidenceService {
 
   Future<Options> _options() async { final token = await _storage.read(key: _tokenKey); if (token == null || token.isEmpty) throw StateError('Session expirée'); return Options(headers: {'Authorization': 'Bearer $token'}); }
   Future<List<Map<String, dynamic>>> list() async { final response = await _client.get('/evidence', options: await _options()); return (response.data as List).map((item) => Map<String, dynamic>.from(item as Map)).toList(); }
-  Future<Map<String, dynamic>> uploadEncrypted(Uint8List bytes, String name) async {
-    final key = await _key();
-    final nonce = _cipher.newNonce();
-    final box = await _cipher.encrypt(bytes, secretKey: key, nonce: nonce);
-    final payload = Uint8List(nonce.length + box.cipherText.length + box.mac.bytes.length)
-      ..setRange(0, nonce.length, nonce)
-      ..setRange(nonce.length, nonce.length + box.cipherText.length, box.cipherText)
-      ..setRange(nonce.length + box.cipherText.length, nonce.length + box.cipherText.length + box.mac.bytes.length, box.mac.bytes);
-    final form = FormData.fromMap({'file': MultipartFile.fromBytes(payload, filename: '$name.safeher'), 'encrypted': 'true'});
-    final response = await _client.post('/evidence/upload', data: form, options: await _options());
-    return Map<String, dynamic>.from(response.data as Map);
-  }
+  Future<Map<String, dynamic>> uploadEncrypted(Uint8List bytes, String name) async { final key = await _key(); final nonce = _cipher.newNonce(); final box = await _cipher.encrypt(bytes, secretKey: key, nonce: nonce); final payload = Uint8List(nonce.length + box.cipherText.length + box.mac.bytes.length)..setRange(0, nonce.length, nonce)..setRange(nonce.length, nonce.length + box.cipherText.length, box.cipherText)..setRange(nonce.length + box.cipherText.length, nonce.length + box.cipherText.length + box.mac.bytes.length, box.mac.bytes); final form = FormData.fromMap({'file': MultipartFile.fromBytes(payload, filename: '$name.safeher'), 'encrypted': 'true'}); final response = await _client.post('/evidence/upload', data: form, options: await _options()); return Map<String, dynamic>.from(response.data as Map); }
+  Future<Uint8List> downloadDecrypted(String id) async { final response = await _client.get('/evidence/$id/download', options: await _options().then((o) => o.copyWith(responseType: ResponseType.bytes))); final bytes = Uint8List.fromList(List<int>.from(response.data as List)); final key = await _key(); if (bytes.length < 28) throw const FormatException('Payload chiffré invalide'); final nonce = bytes.sublist(0, 12); final macStart = bytes.length - 16; final box = SecretBox(bytes.sublist(12, macStart), nonce: nonce, mac: Mac(bytes.sublist(macStart))); return Uint8List.fromList(await _cipher.decrypt(box, secretKey: key)); }
   Future<void> remove(String id) async { await _client.delete('/evidence/$id', options: await _options()); }
   Future<SecretKey> _key() async { final encoded = await _storage.read(key: _vaultKey); if (encoded != null) return SecretKey(base64Url.decode(encoded)); final key = await _cipher.newSecretKey(); final bytes = await key.extractBytes(); await _storage.write(key: _vaultKey, value: base64UrlEncode(bytes)); return SecretKey(bytes); }
 }

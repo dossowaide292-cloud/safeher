@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomUUID } from 'crypto';
+import { createReadStream } from 'fs';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
@@ -21,16 +22,18 @@ export class EvidenceService {
     const destination = join(this.storageDir, storageKey);
     await mkdir(join(this.storageDir, userId), { recursive: true });
     await writeFile(destination, file.buffer, { mode: 0o600 });
-
     try {
-      return await this.prisma.evidence.create({
-        data: { userId, originalName: file.originalname.slice(0, 255), storageKey, mimeType: file.mimetype || 'application/octet-stream', size: file.size, sha256, encrypted },
-        select: { id: true, originalName: true, mimeType: true, size: true, sha256: true, uploadedAt: true, encrypted: true },
-      });
+      return await this.prisma.evidence.create({ data: { userId, originalName: file.originalname.slice(0, 255), storageKey, mimeType: file.mimetype || 'application/octet-stream', size: file.size, sha256, encrypted }, select: { id: true, originalName: true, mimeType: true, size: true, sha256: true, uploadedAt: true, encrypted: true } });
     } catch (error) {
       await unlink(destination).catch(() => undefined);
       throw error;
     }
+  }
+
+  async getDownload(userId: string, id: string) {
+    const evidence = await this.prisma.evidence.findFirst({ where: { id, userId } });
+    if (!evidence) throw new NotFoundException('Preuve introuvable');
+    return { ...evidence, downloadName: this.safeDownloadName(evidence.originalName), stream: createReadStream(join(this.storageDir, evidence.storageKey)) };
   }
 
   async remove(userId: string, id: string) {
@@ -39,5 +42,9 @@ export class EvidenceService {
     await this.prisma.evidence.delete({ where: { id } });
     await unlink(join(this.storageDir, evidence.storageKey)).catch(() => undefined);
     return { message: 'Preuve supprimée' };
+  }
+
+  private safeDownloadName(name: string) {
+    return name.replace(/[\\"\r\n]/g, '_').slice(0, 180) || 'evidence.bin';
   }
 }

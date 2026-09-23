@@ -11,14 +11,10 @@ export class EvidenceService {
   constructor(private readonly prisma: PrismaService) {}
 
   list(userId: string) {
-    return this.prisma.evidence.findMany({
-      where: { userId },
-      orderBy: { uploadedAt: 'desc' },
-      select: { id: true, originalName: true, mimeType: true, size: true, sha256: true, capturedAt: true, uploadedAt: true, encrypted: true },
-    });
+    return this.prisma.evidence.findMany({ where: { userId }, orderBy: { uploadedAt: 'desc' }, select: { id: true, originalName: true, mimeType: true, size: true, sha256: true, capturedAt: true, uploadedAt: true, encrypted: true } });
   }
 
-  async upload(userId: string, file?: { originalname: string; mimetype: string; size: number; buffer: Buffer }) {
+  async upload(userId: string, file?: { originalname: string; mimetype: string; size: number; buffer: Buffer }, encrypted = false) {
     if (!file?.buffer?.length) throw new BadRequestException('Un fichier est obligatoire');
     const sha256 = createHash('sha256').update(file.buffer).digest('hex');
     const storageKey = `${userId}/${randomUUID()}.bin`;
@@ -28,11 +24,7 @@ export class EvidenceService {
 
     try {
       return await this.prisma.evidence.create({
-        data: {
-          userId, originalName: file.originalname.slice(0, 255), storageKey,
-          mimeType: file.mimetype || 'application/octet-stream', size: file.size,
-          sha256, encrypted: false,
-        },
+        data: { userId, originalName: file.originalname.slice(0, 255), storageKey, mimeType: file.mimetype || 'application/octet-stream', size: file.size, sha256, encrypted },
         select: { id: true, originalName: true, mimeType: true, size: true, sha256: true, uploadedAt: true, encrypted: true },
       });
     } catch (error) {

@@ -25,6 +25,7 @@ class SafeHerApp extends StatelessWidget {
         ),
       ),
       home: const LoginScreen(),
+      routes: {'/login': (_) => const LoginScreen()},
     );
   }
 }

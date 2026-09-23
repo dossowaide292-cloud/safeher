@@ -7,13 +7,6 @@ flutter pub get
 flutter run --dart-define=SAFEHER_API_URL=http://10.0.2.2:3000
 ```
 
-- Android Emulator : `http://10.0.2.2:3000`
-- iOS Simulator : `http://127.0.0.1:3000`
-- Téléphone physique : remplacer l'URL par l'adresse IP locale de l'ordinateur.
+Cette étape prépare les notifications SOS : chaque alerte crée une file de notifications `PENDING` pour les contacts actifs. Aucun SMS ou push réel n'est envoyé tant qu'un fournisseur n'est pas configuré et validé.
 
-Le backend expose désormais :
-- `GET/POST/PATCH/DELETE /trusted-contacts`
-- `GET /sos`
-- `PATCH /sos/:id/cancel`
-
-Après `flutter create .`, ajoutez les permissions de localisation à Android et iOS avant de tester la géolocalisation.
+Pour la production, il faudra choisir un fournisseur (SMS ou Firebase Cloud Messaging), obtenir le consentement des contacts et ajouter une politique de rétention des numéros.
